@@ -1,0 +1,109 @@
+services:
+  # ======================
+  # SCYLLADB
+  # ======================
+  scylladb:
+    image: scylladb/scylla:5.4
+    container_name: logs-scylla
+    restart: unless-stopped
+
+    command:
+      - --smp
+      - "1"
+      - --memory
+      - 2G
+      - --overprovisioned
+      - "1"
+      - --api-address
+      - 0.0.0.0
+
+    ports:
+      - "9042:9042"
+
+    volumes:
+      - scylla_data:/var/lib/scylla
+
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'DESCRIBE KEYSPACES' || exit 1"]
+      interval: 10s
+      timeout: 30s
+      retries: 30
+
+    networks:
+      - etl_network
+
+  # ======================
+  # INICIALIZAÇÃO DO BANCO
+  # ======================
+  scylla-init:
+    image: scylladb/scylla:5.4
+    container_name: scylla-init
+
+    depends_on:
+      scylladb:
+        condition: service_healthy
+
+    volumes:
+      - ./src/databases/ecommerce_logs.sql:/init.sql
+
+    entrypoint: ["cqlsh", "scylladb", "-f", "/init.sql"]
+
+    restart: "no"
+
+    networks:
+      - etl_network
+
+  # ======================
+  # SPARK MASTER
+  # ======================
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    hostname: spark-master
+
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.master.Master
+
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    environment:
+      - SPARK_MASTER_HOST=spark-master
+      - SPARK_MASTER_PORT=7077
+      - SPARK_MASTER_WEBUI_PORT=8080
+      - SPARK_PUBLIC_DNS=localhost
+
+    networks:
+      - etl_network
+
+  # ======================
+  # SPARK WORKER
+  # ======================
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    hostname: spark-worker
+
+    depends_on:
+      - spark-master
+
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+
+    environment:
+      - SPARK_LOCAL_IP=spark-worker
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=2G
+
+    networks:
+      - etl_network
+
+networks:
+  etl_network:
+    driver: bridge
+
+volumes:
+  scylla_data:
