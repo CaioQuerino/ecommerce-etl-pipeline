@@ -6,6 +6,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.initialize_spark import initialize_spark
 from utils.initialize_client import get_client
 from schemas.schema_logs_ecommerce import get_schema
+from pyspark.sql import functions as F
+import logging
 
 from dotenv import load_dotenv
 
@@ -16,17 +18,37 @@ def process() :
     spark = initialize_spark()
     schema = get_schema()
     s3_client = get_client("s3")
+    
+    # Configuração básica de log (Dynatrace SDK pode capturar logs do stdout/stderr)
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("DynatraceExecutionLogs")
 
-    input_path = f"s3a://{os.getenv("S3_BUCKET_NAME")}/raw/logs/*.csv"
-    output_path = f"s3a://{os.getenv("S3_BUCKET_NAME")}/processed/logs/"
-
+    bucket_name = os.getenv("S3_BUCKET_NAME")
+    input_path = f"s3a://{bucket_name}/raw/logs/*.csv"
+    
+    logger.info("Iniciando ingestão de logs do S3...")
     df = spark.read.csv(input_path, schema=schema, header=True)
 
-    if not df.isEmpty():
-        df_processed = df.filter(df.membership == "Premium") \
-                         .drop("ip", "accessed_Ffom", "language", "pay_method", "returned_amount", "returned", "sales") \
+    if df.limit(1).count() > 0:
+        # 1. Limpeza e Anonimização (LGPD) - Mascarando o IP
+        logger.info("Aplicando regras de anonimização LGPD...")
+        df_anonymized = df.withColumn("ip_hash", F.sha2(F.col("ip"), 256)) \
+                          .drop("ip", "language", "pay_method")
+
+        # 2. Agregação de métricas para auditoria
+        logger.info("Gerando agregações de auditoria...")
+        df_metrics = df_anonymized.groupBy("membership").agg(
+            F.count("*").alias("total_accesses"),
+            F.current_timestamp().alias("processed_at")
+        )
         
-        df_processed.write.mode("overwrite").parquet(output_path)
+        # 3. Escrita no ScyllaDB (usando o protocolo Cassandra)
+        logger.info("Persistindo dados no ScyllaDB...")
+        df_metrics.write \
+            .format("org.apache.spark.sql.cassandra") \
+            .options(table="audit_metrics", keyspace="ecommerce_logs") \
+            .mode("append") \
+            .save()
 
         bucket_name = os.getenv("S3_BUCKET_NAME")
         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="raw/logs/")
