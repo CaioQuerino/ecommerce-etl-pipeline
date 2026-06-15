@@ -4,6 +4,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.initialize_spark import initialize_spark
+from utils.initialize_logging import initialize_logging
 from utils.initialize_client import get_client
 from schemas.schema_logs_ecommerce import get_schema
 from pyspark.sql import functions as F
@@ -16,14 +17,11 @@ load_dotenv()
 def process() :
 
     spark = initialize_spark()
+    logger = initialize_logging()
     schema = get_schema()
     s3_client = get_client("s3")
     
-    # Configuração básica de log (Dynatrace SDK pode capturar logs do stdout/stderr)
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("DynatraceExecutionLogs")
-
-    bucket_name = os.getenv("S3_BUCKET_NAME")
+    bucket_name = "data-lake-ecommerce-logs-integrations-analytics"
     input_path = f"s3a://{bucket_name}/raw/logs/*.csv"
     
     logger.info("Iniciando ingestão de logs do S3...")
@@ -50,7 +48,7 @@ def process() :
             .mode("append") \
             .save()
 
-        bucket_name = os.getenv("S3_BUCKET_NAME")
+        bucket_name = "data-lake-ecommerce-logs-integrations-analytics"
         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="raw/logs/")
         
         if 'Contents' in response:
