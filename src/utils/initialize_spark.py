@@ -8,7 +8,7 @@ def initialize_spark() -> SparkSession :
 
     spark = (
         SparkSession.builder
-        .appName("EcommerceETLPipeline")
+        .appName("UnifiedLogProcessorPipelines")
         .master("local[*]")
         .config(
             "spark.jars.packages",

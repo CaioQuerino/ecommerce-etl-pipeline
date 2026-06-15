@@ -1,6 +1,6 @@
-# Ecommerce ETL Pipeline
+# Unified Log Processor Pipelines
 
-Pipeline de processamento de logs de auditoria de uma API utilizando Apache Spark, ScyllaDB e AWS S3. O projeto foca em escalabilidade, conformidade com a LGPD e observabilidade avançada.
+Ecossistema de processamento de logs de auditoria e telemetria utilizando Apache Spark, ScyllaDB e AWS S3. O projeto foca em escalabilidade, conformidade com a LGPD e observabilidade avançada para múltiplos domínios de dados.
 
 ## Objetivo
 
@@ -45,7 +45,7 @@ Este projeto faz parte da **Unidade V: Projeto Integrador (Capstone)** e impleme
 ## Estrutura do Projeto
 
 ```text
-ecommerce-etl-pipeline
+Unified-Log-Processor-Pipelines
 │
 ├── docker-compose.yml
 ├── .env
