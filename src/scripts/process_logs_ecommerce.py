@@ -4,7 +4,6 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.initialize_spark import initialize_spark
-from utils.initialize_spark import initialize_spark
 from utils.initialize_logging import initialize_logging
 from utils.initialize_client import get_client
 from schemas.schema_logs_ecommerce import get_schema
