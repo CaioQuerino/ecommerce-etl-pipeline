@@ -1,4 +1,5 @@
 services:
+
   # ======================
   # SCYLLADB
   # ======================
@@ -44,9 +45,14 @@ services:
         condition: service_healthy
 
     volumes:
-      - ./src/databases/ecommerce_logs.sql:/init.sql
+      - ./src/databases:/scripts
 
-    entrypoint: ["cqlsh", "scylladb", "-f", "/init.sql"]
+    entrypoint:
+      [
+        "/bin/bash",
+        "-c",
+        "for f in /scripts/*.sql; do cqlsh scylladb -f \"$f\"; done"
+      ]
 
     restart: "no"
 
