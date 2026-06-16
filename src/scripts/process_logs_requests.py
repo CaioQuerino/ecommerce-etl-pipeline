@@ -16,7 +16,7 @@ def process() :
     schema = get_schema()
     s3_client = get_client("s3")
 
-    bucket_name = "data-lake-logs-request-analytics"
+    bucket_name = os.getenv("S3_BUCKET_REQUEST_LOGS")
     input_path = f"s3a://{bucket_name}/raw/logs/*.csv"
 
     logger.info("Iniciando ingestão de logs do S3...")
