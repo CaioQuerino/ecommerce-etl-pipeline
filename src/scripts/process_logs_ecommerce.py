@@ -21,7 +21,7 @@ def process() :
     schema = get_schema()
     s3_client = get_client("s3")
     
-    bucket_name = "data-lake-ecommerce-logs-integrations-analytics"
+    bucket_name = os.getenv("S3_BUCKET_ECOMMERCE_LOGS")
     input_path = f"s3a://{bucket_name}/raw/logs/*.csv"
     
     logger.info("Iniciando ingestão de logs do S3...")
@@ -47,8 +47,7 @@ def process() :
             .options(table="audit_metrics", keyspace="ecommerce_logs") \
             .mode("append") \
             .save()
-
-        bucket_name = "data-lake-ecommerce-logs-integrations-analytics"
+        
         response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="raw/logs/")
         
         if 'Contents' in response:
