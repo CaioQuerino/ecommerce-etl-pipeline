@@ -51,7 +51,7 @@ services:
       [
         "/bin/bash",
         "-c",
-        "for f in /scripts/*.sql; do cqlsh scylladb -f \"$f\"; done"
+        "for f in /scripts/*.sql; do cqlsh scylladb -f \"$$f\"; done"
       ]
 
     restart: "no"
@@ -75,10 +75,10 @@ services:
       - "8080:8080"
       - "7077:7077"
     environment:
-      - SPARK_MASTER_HOST=spark-master
-      - SPARK_MASTER_PORT=7077
-      - SPARK_MASTER_WEBUI_PORT=8080
-      - SPARK_PUBLIC_DNS=localhost
+      - SPARK_MASTER_HOST=${SPARK_MASTER_HOST}
+      - SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
+      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
+      - SPARK_PUBLIC_DNS=${SPARK_PUBLIC_DNS}
 
     networks:
       - etl_network
@@ -97,12 +97,15 @@ services:
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.worker.Worker
-      spark://spark-master:7077
+      spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
+
+    ports:
+      - "8081:8081"
 
     environment:
       - SPARK_LOCAL_IP=spark-worker
-      - SPARK_WORKER_CORES=1
-      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
 
     networks:
       - etl_network

@@ -1,10 +1,13 @@
 from pyspark.sql import SparkSession
 from dotenv import load_dotenv
 import os
+import sys
 
 load_dotenv()
 
 def initialize_spark() -> SparkSession :
+    os.environ['HADOOP_HOME'] = r'C:\hadoop'
+    sys.path.append(r'C:\hadoop\bin')
 
     spark = (
         SparkSession.builder
@@ -15,8 +18,8 @@ def initialize_spark() -> SparkSession :
             "org.apache.hadoop:hadoop-aws:3.3.4,"
             "com.datastax.spark:spark-cassandra-connector_2.12:3.5.1"
         )
-        .config("spark.cassandra.connection.host", "localhost")
-        .config("spark.cassandra.connection.port", "9042")
+        .config("spark.cassandra.connection.host", os.getenv("SCYLLA_DB_HOST"))
+        .config("spark.cassandra.connection.port", os.getenv("SCYLLA_DB_PORT"))
         .config("spark.executor.memory", "1g")
         .config("spark.driver.memory", "1g")
         .getOrCreate()

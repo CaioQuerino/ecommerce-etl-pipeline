@@ -12,17 +12,17 @@ Este projeto faz parte da **Unidade V: Projeto Integrador (Capstone)** e impleme
 *   **Observabilidade:** Monitoramento de execução e logs integrado ao Dynatrace.
 *   **Arquivamento:** Movimentação automática de logs processados no S3 para evitar duplicidade.
 
----
 
 ## Arquitetura
 
 ```text
        [ AWS S3 ] ----> [ Boto3/S3A ] ----> [ Spark Master ]
                                                   |
-                                          [ Spark Workers ] (ETL)
+                                          [ Spark Worker ] (ETL)
                                                   |
        [ Dynatrace ] <--- [ Logs/Metrics ] <------+------> [ ScyllaDB ]
           (SDK)                                          (Audit Table)
+                                                         (scylla-init auto-schema)
 
 ```
 
@@ -124,9 +124,13 @@ Crie um arquivo `.env`:
 ```env
 AWS_ACCESS_KEY_ID=your_access_key
 AWS_SECRET_ACCESS_KEY=your_secret_key
-AWS_DEFAULT_REGION=us-east-1
+AWS_REGION=us-east-1
 
-S3_BUCKET_NAME=ecommerce-logs
+S3_BUCKET_ECOMMERCE_LOGS=data-lake-ecommerce-logs-integrations-analytics
+S3_BUCKET_REQUEST_LOGS=data-lake-logs-request-analytics
+
+SCYLLA_DB_HOST=localhost
+SCYLLA_DB_PORT=9042
 ```
 
 ---
