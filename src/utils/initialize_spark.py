@@ -2,12 +2,12 @@ from pyspark.sql import SparkSession
 from dotenv import load_dotenv
 import os
 import sys
+from utils.setup_hadoop import ensure_hadoop_setup
 
 load_dotenv()
 
 def initialize_spark() -> SparkSession :
-    os.environ['HADOOP_HOME'] = r'C:\hadoop'
-    sys.path.append(r'C:\hadoop\bin')
+    ensure_hadoop_setup()
 
     spark = (
         SparkSession.builder
