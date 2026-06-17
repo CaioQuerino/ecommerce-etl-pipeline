@@ -66,10 +66,8 @@ def process() :
                 new_key = obj['Key'].replace("raw/logs/", "archive/logs/", 1)
                 s3_client.copy_object(Bucket=bucket_name, CopySource=copy_source, Key=new_key)
                 s3_client.delete_object(Bucket=bucket_name, Key=obj['Key'])
-                
-        spark.stop()
-    else:
-        spark.stop()
+
+    spark.stop()
 
 if __name__ == "__main__":
     process()
